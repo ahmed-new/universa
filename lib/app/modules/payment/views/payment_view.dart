@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -159,7 +160,12 @@ class PaymentView extends GetView<PaymentController> {
                     color: Colors.white,
                   ),
                 )
-              : Text('ابدأ الدفع عبر InstaPay', style: GoogleFonts.cairo()),
+              : Text(
+                  Platform.isIOS
+                      ? 'متابعة تفعيل الاشتراك'
+                      : 'ابدأ الدفع والاشتراك',
+                  style: GoogleFonts.cairo(),
+                ),
           style: ElevatedButton.styleFrom(
             backgroundColor: primaryColor,
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -188,7 +194,9 @@ class PaymentView extends GetView<PaymentController> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'كيف تتم عملية الدفع عبر InstaPay؟',
+                Platform.isIOS
+                    ? 'خطوات تفعيل الكورس'
+                    : 'خطوات تفعيل الاشتراك في الكورس',
                 style: GoogleFonts.cairo(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -197,14 +205,26 @@ class PaymentView extends GetView<PaymentController> {
                 textAlign: TextAlign.right,
               ),
               const SizedBox(height: 12),
-              _buildStepItem('1. اضغط "افتح تطبيق InstaPay" للدفع للمحاضر.'),
-              _buildStepItem('2. انسخ الكود المرجعي وضعه في ملاحظات الدفع.'),
-              _buildStepItem(
-                '3. بعد الدفع، ارجع هنا لتأكيد العملية (رقم العملية إجباري).',
-              ),
-              _buildStepItem(
-                '4. بعد مراجعة المحاضر واعتماد الدفع، يتم تفعيل اشتراكك تلقائياً.',
-              ),
+              if (Platform.isIOS) ...[
+                _buildStepItem(
+                  '1. ادخل كود تفعيل الكورس الخاص بك في الخانة المخصصة.',
+                ),
+                _buildStepItem('2. اضغط على زر التحقق والتأكيد لتفعيل الكورس.'),
+                _buildStepItem(
+                  '3. يتم فتح وتفعيل المحتوى التعليمي مباشرة في حسابك.',
+                ),
+              ] else ...[
+                _buildStepItem(
+                  '1. ادخل كود التفعيل أو ادفع قيمة الكورس للمحاضر.',
+                ),
+                _buildStepItem(
+                  '2. انسخ الكود المرجعي وضعه في ملاحظات التفعيل.',
+                ),
+                _buildStepItem('3. بعد إدخال الكود، ارجع هنا لتأكيد العملية.'),
+                _buildStepItem(
+                  '4. بعد اعتماد العملية، يتم تفعيل اشتراكك تلقائياً.',
+                ),
+              ],
             ],
           ),
         ),
@@ -232,7 +252,7 @@ class PaymentView extends GetView<PaymentController> {
                   ),
                 ),
                 Text(
-                  'المبلغ المطلوب تحويله',
+                  'المبلغ المطلوب',
                   style: GoogleFonts.cairo(
                     color: Colors.greenAccent,
                     fontSize: 14,
@@ -244,19 +264,20 @@ class PaymentView extends GetView<PaymentController> {
 
         const SizedBox(height: 24),
 
-        // InstaPay Link Button
-        ElevatedButton.icon(
-          onPressed: () => controller.openInstaPayLink(),
-          icon: const Icon(Icons.open_in_new),
-          label: Text('فتح تطبيق InstaPay', style: GoogleFonts.cairo()),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6A1B9A), // InstaPay-ish color
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+        // External Link Button
+        if (!Platform.isIOS)
+          ElevatedButton.icon(
+            onPressed: () => controller.openInstaPayLink(),
+            icon: const Icon(Icons.open_in_new),
+            label: Text('متابعة بوابة التحويل', style: GoogleFonts.cairo()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6A1B9A),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
-        ),
 
         const SizedBox(height: 24),
 

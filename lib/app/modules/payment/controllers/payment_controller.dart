@@ -84,21 +84,17 @@ class PaymentController extends GetxController {
   }
 
   Future<void> openInstaPayLink() async {
+    if (Platform.isIOS) return;
     final link = paymentDetails.value?['instapay_link'];
     if (link != null) {
       try {
         final uri = Uri.parse(link);
-        
-        // Try to launch and check result
-        // We use externalApplication mode to let the OS handle the intent (open App or Browser)
         final bool launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-        
         if (!launched) {
-          // If it failed to launch (e.g. app not installed and no browser fallback for scheme), show alert
-          LoggerService().warning('يرجى التأكد من تثبيت تطبيق InstaPay على هاتفك', title: 'تنبيه');
+          LoggerService().warning('تعذر فتح الرابط الخارجي', title: 'تنبيه');
         }
       } catch (e) {
-        LoggerService().warning('يرجى التأكد من تثبيت تطبيق InstaPay على هاتفك', title: 'تنبيه');
+        LoggerService().warning('تعذر فتح الرابط الخارجي', title: 'تنبيه');
       }
     }
   }
