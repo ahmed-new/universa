@@ -65,6 +65,34 @@ class PaymentController extends GetxController {
     }
   }
 
+  Future<void> activateWithCode() async {
+    final code = couponController.text.trim();
+    if (code.isEmpty) {
+      couponError.value = 'يرجى إدخال كود التفعيل الخاص بالكورس';
+      return;
+    }
+
+    isCheckingCoupon.value = true;
+    couponError.value = null;
+
+    try {
+      final result = await _paymentService.checkCoupon(code, subject.id);
+      if (result != null && result['valid'] == true) {
+        couponResult.value = result;
+        LoggerService().success('تم تفعيل الكورس بنجاح!', title: 'تفعيل الكورس');
+        Get.back();
+      } else if (result != null && result['error'] != null) {
+        couponError.value = result['error'];
+      } else {
+        couponError.value = 'كود التفعيل غير صحيح أو تم استخدامه سابقاً';
+      }
+    } catch (e) {
+      couponError.value = 'حدث خطأ أثناء تفعيل الكود، يرجى التأكد من الاتصال بالإنترنت';
+    } finally {
+      isCheckingCoupon.value = false;
+    }
+  }
+
   Future<void> initiatePayment() async {
     isInitiatingPayment.value = true;
     try {
