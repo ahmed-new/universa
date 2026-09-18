@@ -205,15 +205,26 @@ class AboutView extends GetView<AboutController> {
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
-                          onPressed: () async {
-                             final Uri url = Uri.parse('https://wa.me/201226771560');
-                             if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                               Get.snackbar('خطأ', 'لا يمكن فتح واتساب');
-                             }
+                          onPressed: () {
+                            Get.defaultDialog(
+                              title: 'الدعم الفني',
+                              titleStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white),
+                              backgroundColor: const Color(0xFF1A1A2E),
+                              contentPadding: const EdgeInsets.all(20),
+                              content: Text(
+                                'للتواصل مع الدعم الفني أو الاستفسارات البرمجية والأكاديمية، يمكنك مراسلتنا عبر البريد الإلكتروني:\n\nsupport@universa-academy.site',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.cairo(color: Colors.white70, fontSize: 14),
+                              ),
+                              confirm: TextButton(
+                                onPressed: () => Get.back(),
+                                child: Text('حسناً', style: GoogleFonts.cairo(color: Colors.purpleAccent, fontWeight: FontWeight.bold)),
+                              ),
+                            );
                           },
-                          icon: const Icon(Icons.chat_bubble_outline),
+                          icon: const Icon(Icons.email_outlined),
                           label: Text(
-                            'تحدث الآن',
+                            'الدعم الفني',
                             style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
                           ),
                           style: ElevatedButton.styleFrom(

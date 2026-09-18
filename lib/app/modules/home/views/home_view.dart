@@ -320,27 +320,26 @@ class HomeView extends GetView<HomeController> {
 
                 // Contact Social Items
                 _buildContactItem(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  title: 'واتساب',
-                  subtitle: 'تواصل معنا مباشرة',
-                  color: const Color(0xFF25D366),
-                  onTap: () async {
-                    final Uri url = Uri.parse('https://wa.me/201226771560');
-                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                      Get.snackbar('خطأ', 'لا يمكن فتح واتساب');
-                    }
-                  },
-                ),
-                _buildContactItem(
-                  icon: Icons.language_rounded,
-                  title: 'الموقع الإلكتروني',
-                  subtitle: 'تفضل بزيارتنا',
+                  icon: Icons.email_outlined,
+                  title: 'الدعم الفني',
+                  subtitle: 'تواصل معنا عبر البريد',
                   color: primaryColor,
-                  onTap: () async {
-                    final Uri url = Uri.parse('https://universa-academy.site');
-                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                      Get.snackbar('خطأ', 'لا يمكن فتح الموقع');
-                    }
+                  onTap: () {
+                    Get.defaultDialog(
+                      title: 'الدعم الفني',
+                      titleStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white),
+                      backgroundColor: const Color(0xFF1A1A2E),
+                      contentPadding: const EdgeInsets.all(20),
+                      content: Text(
+                        'للتواصل مع الدعم الفني، يمكنك مراسلتنا عبر البريد الإلكتروني:\n\nsupport@universa-academy.site',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.cairo(color: Colors.white70, fontSize: 14),
+                      ),
+                      confirm: TextButton(
+                        onPressed: () => Get.back(),
+                        child: Text('حسناً', style: GoogleFonts.cairo(color: Colors.purpleAccent, fontWeight: FontWeight.bold)),
+                      ),
+                    );
                   },
                 ),
                 const Divider(color: Colors.white10, indent: 20, endIndent: 20),

@@ -317,29 +317,28 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
                     ),
                   ),
                 )
-              : Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF252136),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+              : ElevatedButton.icon(
+                  onPressed: () async {
+                    final result = await Get.toNamed(Routes.PAYMENT, arguments: subject);
+                    if (result == true) {
+                      controller.fetchSubjectDetails();
+                    }
+                  },
+                  icon: const Icon(Icons.vpn_key_rounded, color: Colors.white),
+                  label: Text(
+                    'تفعيل الكورس بكود التفعيل',
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline_rounded, color: Color(0xFF8B5CF6), size: 22),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'هذه المادة متاحة لمشتركي المنصة. قم بتسجيل الدخول بحسابك المفعل للوصول للمحتوى.',
-                          style: GoogleFonts.cairo(
-                            fontSize: 13,
-                            color: Colors.white70,
-                            height: 1.4,
-                          ),
-                          textAlign: TextAlign.right,
-                        ),
-                      ),
-                    ],
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B5CF6),
+                    minimumSize: const Size(double.infinity, 55),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 )),
       ),
