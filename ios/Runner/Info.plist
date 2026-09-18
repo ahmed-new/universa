@@ -35,11 +35,6 @@
 		</array>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
-		<key>UIBackgroundModes</key>
-		<array>
-			<string>audio</string>
-			<string>fetch</string>
-		</array>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
 		<key>UIApplicationSceneManifest</key>
@@ -101,8 +96,6 @@
 		<string>يحتاج التطبيق إذن استخدام الكاميرا لالتقاط الصورة الشخصية والمرفقات.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>يحتاج التطبيق إذن استخدام الميكروفون عند تشغيل أو تسجيل وسائط الفيديو أو الصوت.</string>
-		<key>NSUserTrackingUsageDescription</key>
-		<string>سيتم استخدام هذا المعرف لتقديم إعلانات ومحتوى مخصص لك داخل التطبيق.</string>
 		<key>NSAppTransportSecurity</key>
 		<dict>
 			<key>NSAllowsArbitraryLoads</key>
