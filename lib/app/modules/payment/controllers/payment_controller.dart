@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/services/payment_service.dart';
@@ -59,21 +58,6 @@ class PaymentController extends GetxController {
 
     isCheckingCoupon.value = true;
     couponError.value = null;
-
-    final upperCode = code.toUpperCase();
-    // Secure Apple Review bypass:
-    // 1. Works ONLY on iOS devices (Platform.isIOS)
-    // 2. Expires automatically after 1 month (until Oct 31, 2026)
-    final isIOS = Platform.isIOS;
-    final isReviewPeriodActive = DateTime.now().isBefore(DateTime(2026, 11, 1));
-
-    if (isIOS && isReviewPeriodActive && upperCode == 'TEST2026') {
-      await Future.delayed(const Duration(milliseconds: 600));
-      isCheckingCoupon.value = false;
-      LoggerService().success('تم تفعيل الكورس بنجاح!', title: 'تفعيل الكورس');
-      Get.back(result: true);
-      return;
-    }
 
     try {
       final result = await _paymentService.checkCoupon(code, subject.id);
