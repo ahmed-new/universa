@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../controllers/home_controller.dart';
 import '../../../data/models/subject_model.dart';
 import '../../../routes/app_pages.dart';
@@ -25,7 +24,12 @@ class HomeView extends GetView<HomeController> {
         leadingWidth: 70, // Increase width for padding
         leading: Builder(
           builder: (context) => Padding(
-            padding: const EdgeInsets.only(left: 16.0, top: 8.0, bottom: 8.0 , right:16.0 ),
+            padding: const EdgeInsets.only(
+              left: 16.0,
+              top: 8.0,
+              bottom: 8.0,
+              right: 16.0,
+            ),
             child: GestureDetector(
               onTap: () => Scaffold.of(context).openDrawer(),
               child: Container(
@@ -50,7 +54,10 @@ class HomeView extends GetView<HomeController> {
         centerTitle: true,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 40.0 ,left: 10.0), // More inward padding
+            padding: const EdgeInsets.only(
+              right: 40.0,
+              left: 10.0,
+            ), // More inward padding
             child: CircleAvatar(
               radius: 18,
               backgroundColor: const Color(0xFF4A148C),
@@ -58,7 +65,8 @@ class HomeView extends GetView<HomeController> {
                 child: Image.asset(
                   'assets/logo.png',
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.school, color: Colors.white, size: 20),
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.school, color: Colors.white, size: 20),
                 ),
               ),
             ),
@@ -81,44 +89,52 @@ class HomeView extends GetView<HomeController> {
               children: [
                 // Category Dropdown
                 Expanded(
-                  child: Obx(() => _buildDropdown<String>(
-                        context: context,
-                        value: controller.selectedCategorySlug.value,
-                        hint: 'القسم',
-                        items: [
-                          const DropdownMenuItem<String>(
-                            value: null,
-                            child: Text('كل الأقسام'),
+                  child: Obx(
+                    () => _buildDropdown<String>(
+                      context: context,
+                      value: controller.selectedCategorySlug.value,
+                      hint: 'القسم',
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('كل الأقسام'),
+                        ),
+                        ...controller.categories.map(
+                          (cat) => DropdownMenuItem(
+                            value: cat.slug,
+                            child: Text(cat.name),
                           ),
-                          ...controller.categories.map((cat) => DropdownMenuItem(
-                                value: cat.slug,
-                                child: Text(cat.name),
-                              )),
-                        ],
-                        onChanged: (val) => controller.filterByCategory(val),
-                        icon: Icons.category_rounded,
-                      )),
+                        ),
+                      ],
+                      onChanged: (val) => controller.filterByCategory(val),
+                      icon: Icons.category_rounded,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 // Instructor Dropdown
                 Expanded(
-                  child: Obx(() => _buildDropdown<int>(
-                        context: context,
-                        value: controller.selectedInstructorId.value,
-                        hint: 'المحاضر',
-                        items: [
-                          const DropdownMenuItem<int>(
-                            value: null,
-                            child: Text('كل المحاضرين'),
+                  child: Obx(
+                    () => _buildDropdown<int>(
+                      context: context,
+                      value: controller.selectedInstructorId.value,
+                      hint: 'المحاضر',
+                      items: [
+                        const DropdownMenuItem<int>(
+                          value: null,
+                          child: Text('كل المحاضرين'),
+                        ),
+                        ...controller.instructors.map(
+                          (inst) => DropdownMenuItem(
+                            value: inst.id,
+                            child: Text(inst.fullName),
                           ),
-                          ...controller.instructors.map((inst) => DropdownMenuItem(
-                                value: inst.id,
-                                child: Text(inst.fullName),
-                              )),
-                        ],
-                        onChanged: (val) => controller.filterByInstructor(val),
-                        icon: Icons.person_rounded,
-                      )),
+                        ),
+                      ],
+                      onChanged: (val) => controller.filterByInstructor(val),
+                      icon: Icons.person_rounded,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -136,19 +152,26 @@ class HomeView extends GetView<HomeController> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.search_off_rounded,
-                          color: Colors.white24, size: 60),
+                      const Icon(
+                        Icons.search_off_rounded,
+                        color: Colors.white24,
+                        size: 60,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'لا توجد مواد متاحة حالياً',
                         style: GoogleFonts.cairo(
-                            color: Colors.white, fontSize: 18),
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: controller.fetchInitialData,
-                        child: Text('إعادة المحاولة',
-                            style: GoogleFonts.cairo()),
+                        child: Text(
+                          'إعادة المحاولة',
+                          style: GoogleFonts.cairo(),
+                        ),
                       ),
                     ],
                   ),
@@ -191,9 +214,15 @@ class HomeView extends GetView<HomeController> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
-          hint: Text(hint, style: GoogleFonts.cairo(fontSize: 14, color: Colors.white54)),
+          hint: Text(
+            hint,
+            style: GoogleFonts.cairo(fontSize: 14, color: Colors.white54),
+          ),
           isExpanded: true,
-          icon: const Icon(Icons.arrow_drop_down_rounded, color: Colors.cyanAccent),
+          icon: const Icon(
+            Icons.arrow_drop_down_rounded,
+            color: Colors.cyanAccent,
+          ),
           dropdownColor: const Color(0xFF1A1A2E),
           items: items,
           onChanged: onChanged,
@@ -202,7 +231,11 @@ class HomeView extends GetView<HomeController> {
             return items.map<Widget>((DropdownMenuItem<T> item) {
               return Row(
                 children: [
-                  Icon(icon, size: 16, color: Colors.cyanAccent.withOpacity(0.7)),
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: Colors.cyanAccent.withOpacity(0.7),
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -251,9 +284,7 @@ class HomeView extends GetView<HomeController> {
         children: [
           // Drawer Header
           DrawerHeader(
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A1A2E),
-            ),
+            decoration: const BoxDecoration(color: Color(0xFF1A1A2E)),
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -303,10 +334,13 @@ class HomeView extends GetView<HomeController> {
                   },
                 ),
                 const Divider(color: Colors.white10, indent: 20, endIndent: 20),
-                
+
                 // Contact Section Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 15,
+                  ),
                   child: Text(
                     'تواصل معنا',
                     style: GoogleFonts.cairo(
@@ -327,17 +361,29 @@ class HomeView extends GetView<HomeController> {
                   onTap: () {
                     Get.defaultDialog(
                       title: 'الدعم الفني',
-                      titleStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white),
+                      titleStyle: GoogleFonts.cairo(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                       backgroundColor: const Color(0xFF1A1A2E),
                       contentPadding: const EdgeInsets.all(20),
                       content: Text(
                         'للتواصل مع الدعم الفني، يمكنك مراسلتنا عبر البريد الإلكتروني:\n\nsupport@universa-academy.site',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.cairo(color: Colors.white70, fontSize: 14),
+                        style: GoogleFonts.cairo(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
                       ),
                       confirm: TextButton(
                         onPressed: () => Get.back(),
-                        child: Text('حسناً', style: GoogleFonts.cairo(color: Colors.purpleAccent, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'حسناً',
+                          style: GoogleFonts.cairo(
+                            color: Colors.purpleAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -360,10 +406,7 @@ class HomeView extends GetView<HomeController> {
             padding: const EdgeInsets.all(20.0),
             child: Text(
               'الإصدار 1.0.0',
-              style: GoogleFonts.cairo(
-                color: Colors.white24,
-                fontSize: 12,
-              ),
+              style: GoogleFonts.cairo(color: Colors.white24, fontSize: 12),
             ),
           ),
         ],
@@ -406,7 +449,11 @@ class HomeView extends GetView<HomeController> {
       ),
       title: Text(
         title,
-        style: GoogleFonts.cairo(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+        style: GoogleFonts.cairo(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+        ),
         textAlign: TextAlign.right,
       ),
       subtitle: Text(
@@ -419,7 +466,11 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  Widget _buildSubjectCard(BuildContext context, Subject subject, Color primaryColor) {
+  Widget _buildSubjectCard(
+    BuildContext context,
+    Subject subject,
+    Color primaryColor,
+  ) {
     final secondaryColor = Theme.of(context).colorScheme.secondary;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -445,13 +496,19 @@ class HomeView extends GetView<HomeController> {
               height: 200,
               width: double.infinity,
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
                 child: Image.network(
                   subject.coverImage.trim(),
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: const Color(0xFF252545),
-                    child: const Icon(Icons.image_not_supported, size: 50, color: Colors.white24),
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      size: 50,
+                      color: Colors.white24,
+                    ),
                   ),
                 ),
               ),
@@ -488,7 +545,11 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.person_outline, size: 18, color: Colors.cyanAccent),
+                    const Icon(
+                      Icons.person_outline,
+                      size: 18,
+                      color: Colors.cyanAccent,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -501,7 +562,11 @@ class HomeView extends GetView<HomeController> {
                     if (subject.isEnrolled)
                       Row(
                         children: [
-                          const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 18),
+                          const Icon(
+                            Icons.check_circle_outline,
+                            color: Colors.greenAccent,
+                            size: 18,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'مشترك',
@@ -517,7 +582,10 @@ class HomeView extends GetView<HomeController> {
                       const SizedBox.shrink(),
                     // Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF4A148C).withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
@@ -535,7 +603,11 @@ class HomeView extends GetView<HomeController> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Icon(Icons.school_outlined, size: 14, color: Color(0xFFB39DDB)),
+                          const Icon(
+                            Icons.school_outlined,
+                            size: 14,
+                            color: Color(0xFFB39DDB),
+                          ),
                         ],
                       ),
                     ),
@@ -564,13 +636,20 @@ class HomeView extends GetView<HomeController> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
-                        Get.toNamed(Routes.SUBJECT_DETAILS, arguments: subject.slug);
+                        Get.toNamed(
+                          Routes.SUBJECT_DETAILS,
+                          arguments: subject.slug,
+                        );
                       },
                       borderRadius: BorderRadius.circular(16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.visibility_outlined, color: Colors.white, size: 20),
+                          const Icon(
+                            Icons.visibility_outlined,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           const SizedBox(width: 10),
                           Text(
                             'عرض المادة',
@@ -593,5 +672,3 @@ class HomeView extends GetView<HomeController> {
     );
   }
 }
-
-

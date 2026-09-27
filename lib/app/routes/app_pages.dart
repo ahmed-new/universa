@@ -19,8 +19,6 @@ import '../modules/downloaded_videos/views/downloaded_videos_view.dart';
 import '../modules/downloaded_videos/controllers/downloaded_videos_controller.dart';
 import '../modules/offline_player/views/offline_player_view.dart';
 import '../modules/offline_player/controllers/offline_player_controller.dart';
-import '../modules/payment/views/payment_view.dart';
-import '../modules/payment/controllers/payment_controller.dart';
 import '../modules/my_enrollments/views/my_enrollments_view.dart';
 import '../modules/my_enrollments/bindings/my_enrollments_binding.dart';
 
@@ -96,13 +94,6 @@ class AppPages {
       page: () => const OfflinePlayerView(),
       binding: BindingsBuilder(() {
         Get.lazyPut(() => OfflinePlayerController());
-      }),
-    ),
-    GetPage(
-      name: _Paths.PAYMENT,
-      page: () => const PaymentView(),
-      binding: BindingsBuilder(() {
-        Get.lazyPut(() => PaymentController());
       }),
     ),
     GetPage(

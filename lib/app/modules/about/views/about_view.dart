@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../controllers/about_controller.dart';
 
 class AboutView extends GetView<AboutController> {
@@ -23,7 +22,10 @@ class AboutView extends GetView<AboutController> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Get.back(),
         ),
       ),
@@ -87,7 +89,8 @@ class AboutView extends GetView<AboutController> {
                   // Mission Section
                   _buildSectionCard(
                     title: 'رسالتنا',
-                    content: 'تتمثل رسالتنا في Universa Academy في توفير تعليم عالي الجودة يكون متاحًا للجميع بغض النظر عن الموقع الجغرافي أو الظروف الشخصية. نسعى لتمكين الطلاب من خلال منحهم فرصة الوصول إلى محتوى تعليمي متميز يقدمه نخبة من الأساتذة المتخصصين.',
+                    content:
+                        'تتمثل رسالتنا في Universa Academy في توفير تعليم عالي الجودة يكون متاحًا للجميع بغض النظر عن الموقع الجغرافي أو الظروف الشخصية. نسعى لتمكين الطلاب من خلال منحهم فرصة الوصول إلى محتوى تعليمي متميز يقدمه نخبة من الأساتذة المتخصصين.',
                     icon: Icons.rocket_launch_rounded,
                     color: Colors.blueAccent,
                     isLeftIcon: true,
@@ -97,7 +100,8 @@ class AboutView extends GetView<AboutController> {
                   // Vision Section
                   _buildSectionCard(
                     title: 'رؤيتنا',
-                    content: 'نتطلع في Universa Academy إلى أن نكون المنصة التعليمية الرائدة في العالم العربي، التي تجسر الفجوة بين التعليم التقليدي والتعلم الرقمي، وتوفر تجربة تعليمية متكاملة تجمع بين جودة المحتوى وسهولة الوصول.',
+                    content:
+                        'نتطلع في Universa Academy إلى أن نكون المنصة التعليمية الرائدة في العالم العربي، التي تجسر الفجوة بين التعليم التقليدي والتعلم الرقمي، وتوفر تجربة تعليمية متكاملة تجمع بين جودة المحتوى وسهولة الوصول.',
                     icon: Icons.remove_red_eye_rounded,
                     color: Colors.tealAccent,
                     isLeftIcon: false,
@@ -109,11 +113,29 @@ class AboutView extends GetView<AboutController> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(child: _buildValueCard('الأمان', Icons.security, Colors.purpleAccent)),
+                      Expanded(
+                        child: _buildValueCard(
+                          'الأمان',
+                          Icons.security,
+                          Colors.purpleAccent,
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildValueCard('الشمولية', Icons.groups_rounded, Colors.cyanAccent)),
+                      Expanded(
+                        child: _buildValueCard(
+                          'الشمولية',
+                          Icons.groups_rounded,
+                          Colors.cyanAccent,
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildValueCard('الجودة', Icons.verified_rounded, Colors.purpleAccent)),
+                      Expanded(
+                        child: _buildValueCard(
+                          'الجودة',
+                          Icons.verified_rounded,
+                          Colors.purpleAccent,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 40),
@@ -167,10 +189,22 @@ class AboutView extends GetView<AboutController> {
                   // FAQ Section
                   _buildSectionTitle('الأسئلة الشائعة'),
                   const SizedBox(height: 16),
-                  _buildFAQItem('كيف يمكنني التسجيل في المنصة؟', 'يمكنك التسجيل بسهولة من خلال النقر على "حساب جديد" في الصفحة الرئيسية، ثم ملء البيانات المطلوبة وإنشاء حساب جديد. بعد ذلك، يمكنك تصفح الدورات المتاحة والتسجيل فيها.'),
-                  _buildFAQItem('هل الدورات معتمدة؟', 'نعم، جميع الدورات المقدمة على منصة Universa Academy معتمدة ويتم تقديمها من قبل أساتذة جامعيين متخصصين. نحن نحرص على توفير محتوى تعليمي يتوافق مع المعايير الأكاديمية العالمية.'),
-                  _buildFAQItem('كيف يمكنني الوصول إلى المحتوى بعد التسجيل؟', 'بعد التسجيل في أي دورة، يمكنك الوصول إلى المحتوى من خلال الصفحة الرئيسية في حسابك الشخصي. يمكنك مشاهدة المحاضرات، وتنزيل المواد التعليمية، والمشاركة في الاختبارات من خلال هذه الصفحة.'),
-                  _buildFAQItem('هل يمكنني الوصول إلى المحتوى من أي جهاز؟', 'لضمان أمان المحتوى وحماية حقوق الملكية الفكرية، يمكنك الوصول إلى المحتوى من خلال جهاز واحد فقط يتم توثيقه عند التسجيل. هذا يساعدنا في منع مشاركة المحتوى بشكل غير مصرح به.'),
+                  _buildFAQItem(
+                    'كيف يمكنني التسجيل في المنصة؟',
+                    'يمكنك التسجيل بسهولة من خلال النقر على "حساب جديد" في الصفحة الرئيسية، ثم ملء البيانات المطلوبة وإنشاء حساب جديد. بعد ذلك، يمكنك تصفح الدورات المتاحة والتسجيل فيها.',
+                  ),
+                  _buildFAQItem(
+                    'هل الدورات معتمدة؟',
+                    'نعم، جميع الدورات المقدمة على منصة Universa Academy معتمدة ويتم تقديمها من قبل أساتذة جامعيين متخصصين. نحن نحرص على توفير محتوى تعليمي يتوافق مع المعايير الأكاديمية العالمية.',
+                  ),
+                  _buildFAQItem(
+                    'كيف يمكنني الوصول إلى المحتوى بعد التسجيل؟',
+                    'بعد التسجيل في أي دورة، يمكنك الوصول إلى المحتوى من خلال الصفحة الرئيسية في حسابك الشخصي. يمكنك مشاهدة المحاضرات، وتنزيل المواد التعليمية، والمشاركة في الاختبارات من خلال هذه الصفحة.',
+                  ),
+                  _buildFAQItem(
+                    'هل يمكنني الوصول إلى المحتوى من أي جهاز؟',
+                    'لضمان أمان المحتوى وحماية حقوق الملكية الفكرية، يمكنك الوصول إلى المحتوى من خلال جهاز واحد فقط يتم توثيقه عند التسجيل. هذا يساعدنا في منع مشاركة المحتوى بشكل غير مصرح به.',
+                  ),
                   const SizedBox(height: 40),
 
                   // Contact Banner
@@ -208,29 +242,46 @@ class AboutView extends GetView<AboutController> {
                           onPressed: () {
                             Get.defaultDialog(
                               title: 'الدعم الفني',
-                              titleStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white),
+                              titleStyle: GoogleFonts.cairo(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                               backgroundColor: const Color(0xFF1A1A2E),
                               contentPadding: const EdgeInsets.all(20),
                               content: Text(
                                 'للتواصل مع الدعم الفني أو الاستفسارات البرمجية والأكاديمية، يمكنك مراسلتنا عبر البريد الإلكتروني:\n\nsupport@universa-academy.site',
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.cairo(color: Colors.white70, fontSize: 14),
+                                style: GoogleFonts.cairo(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
                               ),
                               confirm: TextButton(
                                 onPressed: () => Get.back(),
-                                child: Text('حسناً', style: GoogleFonts.cairo(color: Colors.purpleAccent, fontWeight: FontWeight.bold)),
+                                child: Text(
+                                  'حسناً',
+                                  style: GoogleFonts.cairo(
+                                    color: Colors.purpleAccent,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             );
                           },
                           icon: const Icon(Icons.email_outlined),
                           label: Text(
                             'الدعم الفني',
-                            style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                            style: GoogleFonts.cairo(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF4A148C),
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 12,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -254,7 +305,9 @@ class AboutView extends GetView<AboutController> {
       child: Container(
         padding: const EdgeInsets.only(bottom: 8),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFFBB86FC), width: 2)),
+          border: Border(
+            bottom: BorderSide(color: Color(0xFFBB86FC), width: 2),
+          ),
         ),
         child: Text(
           title,
@@ -394,7 +447,11 @@ class AboutView extends GetView<AboutController> {
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.person_outline, color: Colors.white54, size: 40),
+            child: const Icon(
+              Icons.person_outline,
+              color: Colors.white54,
+              size: 40,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -418,10 +475,7 @@ class AboutView extends GetView<AboutController> {
           Text(
             subRole,
             textAlign: TextAlign.center,
-            style: GoogleFonts.cairo(
-              color: Colors.white54,
-              fontSize: 10,
-            ),
+            style: GoogleFonts.cairo(color: Colors.white54, fontSize: 10),
           ),
         ],
       ),
@@ -442,10 +496,7 @@ class AboutView extends GetView<AboutController> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: GoogleFonts.cairo(
-            color: Colors.white70,
-            fontSize: 12,
-          ),
+          style: GoogleFonts.cairo(color: Colors.white70, fontSize: 12),
         ),
       ],
     );

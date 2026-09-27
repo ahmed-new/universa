@@ -48,7 +48,11 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildCoursesList(subject.courses, primaryColor, secondaryColor),
+                    _buildCoursesList(
+                      subject.courses,
+                      primaryColor,
+                      secondaryColor,
+                    ),
                     const SizedBox(height: 100), // Space for bottom button
                   ],
                 ),
@@ -66,7 +70,11 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
     );
   }
 
-  Widget _buildSliverAppBar(Subject subject, Color primaryColor, Color secondaryColor) {
+  Widget _buildSliverAppBar(
+    Subject subject,
+    Color primaryColor,
+    Color secondaryColor,
+  ) {
     return SliverAppBar(
       expandedHeight: 300,
       pinned: true,
@@ -83,7 +91,8 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
               Image.network(
                 subject.coverImage,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF1A1A2E)),
+                errorBuilder: (context, error, stackTrace) =>
+                    Container(color: const Color(0xFF1A1A2E)),
               ),
             Container(
               decoration: BoxDecoration(
@@ -117,7 +126,11 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
           ),
           child: Text(
             subject.category.name,
-            style: GoogleFonts.cairo(color: const Color(0xFFB39DDB), fontSize: 12, fontWeight: FontWeight.bold),
+            style: GoogleFonts.cairo(
+              color: const Color(0xFFB39DDB),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -140,7 +153,11 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
               style: GoogleFonts.cairo(color: Colors.white70, fontSize: 16),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.person_outline, color: Colors.cyanAccent, size: 20),
+            const Icon(
+              Icons.person_outline,
+              color: Colors.cyanAccent,
+              size: 20,
+            ),
           ],
         ),
         if (subject.description.isNotEmpty) ...[
@@ -148,14 +165,22 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
           Text(
             subject.description,
             textAlign: TextAlign.right,
-            style: GoogleFonts.cairo(color: Colors.white60, fontSize: 14, height: 1.6),
+            style: GoogleFonts.cairo(
+              color: Colors.white60,
+              fontSize: 14,
+              height: 1.6,
+            ),
           ),
         ],
       ],
     );
   }
 
-  Widget _buildCoursesList(List<Course> courses, Color primaryColor, Color secondaryColor) {
+  Widget _buildCoursesList(
+    List<Course> courses,
+    Color primaryColor,
+    Color secondaryColor,
+  ) {
     if (courses.isEmpty) {
       return Center(
         child: Text(
@@ -191,7 +216,9 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
                 fontSize: 16,
               ),
             ),
-            children: course.lessons.map((lesson) => _buildLessonItem(lesson, primaryColor)).toList(),
+            children: course.lessons
+                .map((lesson) => _buildLessonItem(lesson, primaryColor))
+                .toList(),
           ),
         );
       },
@@ -206,37 +233,62 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       leading: isUnlocked
-        ? (isCompleted
-            ? Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.greenAccent.withOpacity(0.5)),
-                ),
-                child: const Icon(Icons.check, color: Colors.greenAccent, size: 16),
-              )
-            : (lesson.isFreePreview 
+          ? (isCompleted
                 ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       color: Colors.green.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.green.withOpacity(0.5)),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.greenAccent.withOpacity(0.5),
+                      ),
                     ),
-                    child: Text(
-                      'مجاني',
-                      style: GoogleFonts.cairo(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.greenAccent,
+                      size: 16,
                     ),
                   )
-                : const Icon(Icons.play_circle_outline_rounded, color: Colors.blueAccent, size: 22)))
-        : const Icon(Icons.lock_outline_rounded, color: Colors.white24, size: 18),
+                : (lesson.isFreePreview
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: Colors.green.withOpacity(0.5),
+                            ),
+                          ),
+                          child: Text(
+                            'مجاني',
+                            style: GoogleFonts.cairo(
+                              color: Colors.greenAccent,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.play_circle_outline_rounded,
+                          color: Colors.blueAccent,
+                          size: 22,
+                        )))
+          : const Icon(
+              Icons.lock_outline_rounded,
+              color: Colors.white24,
+              size: 18,
+            ),
       title: Text(
         lesson.title,
         textAlign: TextAlign.right,
         style: GoogleFonts.cairo(
           color: isCompleted ? Colors.greenAccent : Colors.white70,
-          decoration: isCompleted ? TextDecoration.none : null, // Optional: lineThrough if desired, but green is usually enough
+          decoration: isCompleted
+              ? TextDecoration.none
+              : null, // Optional: lineThrough if desired, but green is usually enough
           fontSize: 14,
         ),
       ),
@@ -249,7 +301,10 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
         if (isUnlocked) {
           Get.toNamed(Routes.LESSON_DETAILS, arguments: lesson.id);
         } else {
-          LoggerService().warning('يجب الاشتراك في المادة لمشاهدة هذا الدرس', title: 'عفواً');
+          LoggerService().warning(
+            'يجب الاشتراك في المادة لمشاهدة هذا الدرس',
+            title: 'عفواً',
+          );
         }
       },
     );
@@ -262,85 +317,109 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
         decoration: BoxDecoration(
           color: const Color(0xFF1A1A2E),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, offset: const Offset(0, -5)),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
           ],
         ),
-        child: subject.isEnrolled 
-          ? Container(
-              height: 55,
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.green.withOpacity(0.5)),
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 24),
-                    const SizedBox(width: 10),
-                    Text(
-                      'أنت مشترك في هذه المادة',
-                      style: GoogleFonts.cairo(
-                        fontSize: 16, 
-                        fontWeight: FontWeight.bold, 
-                        color: Colors.greenAccent
-                      ),
-                    ),
-                  ],
+        child: subject.isEnrolled
+            ? Container(
+                height: 55,
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.green.withOpacity(0.5)),
                 ),
-              ),
-            )
-          : (subject.enrollmentStatus == 'pending'
-              ? Container(
-                  height: 55,
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.orange.withOpacity(0.5)),
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.hourglass_empty_rounded, color: Colors.orangeAccent, size: 24),
-                        const SizedBox(width: 10),
-                        Text(
-                          'طلب الاشتراك قيد المراجعة',
-                          style: GoogleFonts.cairo(
-                            fontSize: 16, 
-                            fontWeight: FontWeight.bold, 
-                            color: Colors.orangeAccent
-                          ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.check_circle_outline,
+                        color: Colors.greenAccent,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'أنت مشترك في هذه المادة',
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.greenAccent,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                )
-              : ElevatedButton.icon(
-                  onPressed: () async {
-                    final result = await Get.toNamed(Routes.PAYMENT, arguments: subject);
-                    if (result == true) {
-                      controller.fetchSubjectDetails();
-                    }
-                  },
-                  icon: const Icon(Icons.vpn_key_rounded, color: Colors.white),
-                  label: Text(
-                    'تفعيل الكورس بكود التفعيل',
-                    style: GoogleFonts.cairo(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B5CF6),
-                    minimumSize: const Size(double.infinity, 55),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                )),
+                ),
+              )
+            : (subject.enrollmentStatus == 'pending'
+                  ? Container(
+                      height: 55,
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.5),
+                        ),
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.hourglass_empty_rounded,
+                              color: Colors.orangeAccent,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'طلب الاشتراك قيد المراجعة',
+                              style: GoogleFonts.cairo(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orangeAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF252136),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.verified_user_outlined,
+                            color: Color(0xFF8B5CF6),
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'هذه المادة متاحة للطلاب المسجلين. يتم تفعيل المحتوى تلقائياً لحسابك بعد مراجعة بيناتك.',
+                              style: GoogleFonts.cairo(
+                                fontSize: 13,
+                                color: Colors.white70,
+                                height: 1.4,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
       ),
     );
   }
@@ -356,11 +435,17 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
-                children: List.generate(5, (index) => Container(
-                  height: 60,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(16)),
-                )),
+                children: List.generate(
+                  5,
+                  (index) => Container(
+                    height: 60,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -374,7 +459,11 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 60),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: Colors.redAccent,
+            size: 60,
+          ),
           const SizedBox(height: 16),
           Text(
             'حدث خطأ في تحميل البيانات',

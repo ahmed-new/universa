@@ -11,7 +11,6 @@ abstract class Routes {
   static const LESSON_DETAILS = _Paths.LESSON_DETAILS;
   static const DOWNLOADED_VIDEOS = _Paths.DOWNLOADED_VIDEOS;
   static const OFFLINE_PLAYER = _Paths.OFFLINE_PLAYER;
-  static const PAYMENT = _Paths.PAYMENT;
   static const MY_ENROLLMENTS = _Paths.MY_ENROLLMENTS;
 }
 
@@ -26,6 +25,5 @@ abstract class _Paths {
   static const LESSON_DETAILS = '/lesson-details';
   static const DOWNLOADED_VIDEOS = '/downloaded-videos';
   static const OFFLINE_PLAYER = '/offline-player';
-  static const PAYMENT = '/payment';
   static const MY_ENROLLMENTS = '/my-enrollments';
 }

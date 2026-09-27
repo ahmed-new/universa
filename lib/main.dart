@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app/data/services/auth_service.dart';
 import 'app/data/services/content_service.dart';
 import 'app/data/services/download_service.dart';
-import 'app/data/services/payment_service.dart';
 import 'app/data/services/ad_service.dart';
 import 'app/routes/app_pages.dart';
 
@@ -15,7 +14,6 @@ void main() async {
   final authService = Get.put(AuthService(), permanent: true);
   Get.put(ContentService(), permanent: true);
   Get.put(DownloadService(), permanent: true);
-  Get.put(PaymentService(), permanent: true);
   await Get.putAsync(() => AdService().init(), permanent: true);
 
   // Check login status and first time
