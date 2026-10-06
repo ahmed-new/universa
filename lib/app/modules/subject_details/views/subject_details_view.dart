@@ -302,7 +302,7 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
           Get.toNamed(Routes.LESSON_DETAILS, arguments: lesson.id);
         } else {
           LoggerService().warning(
-            'يجب الاشتراك في المادة لمشاهدة هذا الدرس',
+            'هذا الدرس غير متاح لحسابك',
             title: 'عفواً',
           );
         }
@@ -343,7 +343,7 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'أنت مشترك في هذه المادة',
+                        'هذه المادة متاحة لحسابك',
                         style: GoogleFonts.cairo(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -375,7 +375,7 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              'طلب الاشتراك قيد المراجعة',
+                              'هذا المحتوى غير متاح لحسابك',
                               style: GoogleFonts.cairo(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -408,7 +408,7 @@ class SubjectDetailsView extends GetView<SubjectDetailsController> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'هذه المادة متاحة للطلاب المسجلين. يتم تفعيل المحتوى تلقائياً لحسابك بعد مراجعة بيناتك.',
+                              'هذا المحتوى غير متاح لحسابك',
                               style: GoogleFonts.cairo(
                                 fontSize: 13,
                                 color: Colors.white70,

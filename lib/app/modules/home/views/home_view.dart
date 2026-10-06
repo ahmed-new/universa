@@ -569,7 +569,7 @@ class HomeView extends GetView<HomeController> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'مشترك',
+                            'متاح',
                             style: GoogleFonts.cairo(
                               color: Colors.greenAccent,
                               fontWeight: FontWeight.bold,

@@ -20,7 +20,7 @@ class MyEnrollmentsController extends GetxController {
       final list = await _contentService.getMyEnrollments();
       enrollments.assignAll(list);
     } catch (e) {
-      Get.snackbar('خطأ', 'فشل تحميل المواد المشترك بها');
+      Get.snackbar('خطأ', 'فشل تحميل المواد المتاحة لحسابك');
     } finally {
       isLoading.value = false;
     }

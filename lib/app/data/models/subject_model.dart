@@ -7,7 +7,6 @@ class Subject {
   final String slug;
   final String description;
   final String coverImage;
-  final String priceEgp;
   final bool isEnrolled;
   final String enrollmentStatus;
   final Instructor instructor;
@@ -20,7 +19,6 @@ class Subject {
     required this.slug,
     required this.description,
     required this.coverImage,
-    required this.priceEgp,
     required this.isEnrolled,
     required this.enrollmentStatus,
     required this.instructor,
@@ -44,7 +42,6 @@ class Subject {
       coverImage: json['cover_image'] != null 
           ? json['cover_image'].toString().trim() 
           : '',
-      priceEgp: json['price_egp']?.toString() ?? '0.00',
       isEnrolled: json['is_enrolled'] ?? false,
       enrollmentStatus: json['enrollment_status']?.toString() ?? '',
       instructor: json['instructor'] != null
