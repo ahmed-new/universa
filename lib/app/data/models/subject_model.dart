@@ -93,6 +93,8 @@ class Lesson {
   final bool isCompleted;
   final String? videoUrl;
   final String? directHlsUrl;
+  final String? downloadUrl;
+  final bool streamingLocked;
   final String? pdfUrl;
   final String? externalExamUrl;
 
@@ -105,6 +107,8 @@ class Lesson {
     required this.isCompleted,
     this.videoUrl,
     this.directHlsUrl,
+    this.downloadUrl,
+    this.streamingLocked = false,
     this.pdfUrl,
     this.externalExamUrl,
   });
@@ -119,6 +123,8 @@ class Lesson {
       isCompleted: json['is_completed'] ?? false,
       videoUrl: json['video_url'],
       directHlsUrl: json['direct_hls_url'],
+      downloadUrl: json['download_url'],
+      streamingLocked: json['streaming_locked'] ?? false,
       pdfUrl: json['pdf_url'],
       externalExamUrl: json['external_exam_url'],
     );

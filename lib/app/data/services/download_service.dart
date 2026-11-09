@@ -23,7 +23,15 @@ class DownloadService extends GetxService {
       _progressStreamController.stream;
 
   Future<String?> downloadLesson(Lesson lesson) async {
-    final url = lesson.directHlsUrl ?? lesson.videoUrl;
+    // Phase 2 logic: Use downloadUrl with legacy fallback
+    // Do NOT fall back to streaming URLs if streaming is locked.
+    String? url;
+    if (lesson.streamingLocked) {
+      url = lesson.downloadUrl;
+    } else {
+      url = lesson.downloadUrl ?? lesson.directHlsUrl ?? lesson.videoUrl;
+    }
+
     if (url == null) {
       LoggerService().error('لا يوجد رابط فيديو متاح للتحميل', title: 'خطأ');
       return null;
@@ -145,11 +153,12 @@ class DownloadService extends GetxService {
       // 2. Check if it's a Master Playlist (contains variant streams)
       if (m3u8Content.contains('#EXT-X-STREAM-INF')) {
         final lines = m3u8Content.split('\n');
-        String? bestVariantUrl;
-        int maxBandwidth = -1;
+        String? selectedVariantUrl;
+        int selectedBandwidth = -1;
+        int selectedHeight = -1;
 
         debugPrint(
-          'DownloadService: Parsing master playlist for highest quality...',
+          'DownloadService: Parsing master playlist for 720p preference...',
         );
 
         for (int i = 0; i < lines.length; i++) {
@@ -161,13 +170,14 @@ class DownloadService extends GetxService {
                 ? int.tryParse(bandwidthMatch.group(1)!) ?? 0
                 : 0;
 
-            // Also check for RESOLUTION for logging
+            // Parse RESOLUTION
             final resolutionMatch = RegExp(
-              r'RESOLUTION=(\d+x\d+)',
+              r'RESOLUTION=(\d+)x(\d+)',
             ).firstMatch(line);
-            final resolution = resolutionMatch != null
-                ? resolutionMatch.group(1)
-                : 'unknown';
+            int height = -1;
+            if (resolutionMatch != null) {
+              height = int.tryParse(resolutionMatch.group(2)!) ?? -1;
+            }
 
             if (i + 1 < lines.length && !lines[i + 1].startsWith('#')) {
               String variantUri = lines[i + 1].trim();
@@ -179,23 +189,50 @@ class DownloadService extends GetxService {
                 }
 
                 debugPrint(
-                  'DownloadService: Found variant: $resolution, Bandwidth: $bandwidth',
+                  'DownloadService: Found variant height: $height, Bandwidth: $bandwidth',
                 );
 
-                if (bandwidth > maxBandwidth) {
-                  maxBandwidth = bandwidth;
-                  bestVariantUrl = variantUri;
+                // 720p Selection Logic:
+                // 1. Prefer height <= 720. Among those, pick highest height.
+                // 2. If height is unknown (-1), treat it as a candidate if no height <= 720 found.
+                // 3. If only height > 720 found, pick the lowest height among them.
+                
+                bool isBetter = false;
+                if (selectedVariantUrl == null) {
+                  isBetter = true;
+                } else {
+                  if (height != -1 && height <= 720) {
+                    if (selectedHeight == -1 || selectedHeight > 720 || height > selectedHeight || (height == selectedHeight && bandwidth > selectedBandwidth)) {
+                      isBetter = true;
+                    }
+                  } else if (height == -1) {
+                    if (selectedHeight == -1 && bandwidth > selectedBandwidth) {
+                      isBetter = true;
+                    } else if (selectedHeight > 720) {
+                      isBetter = true;
+                    }
+                  } else if (height > 720) {
+                    if (selectedHeight == -1 || (selectedHeight > 720 && height < selectedHeight)) {
+                      isBetter = true;
+                    }
+                  }
+                }
+
+                if (isBetter) {
+                  selectedVariantUrl = variantUri;
+                  selectedBandwidth = bandwidth;
+                  selectedHeight = height;
                 }
               }
             }
           }
         }
 
-        if (bestVariantUrl != null) {
+        if (selectedVariantUrl != null) {
           debugPrint(
-            'DownloadService: Selected highest quality variant with bandwidth: $maxBandwidth',
+            'DownloadService: Selected variant with height: $selectedHeight, bandwidth: $selectedBandwidth',
           );
-          currentUrl = bestVariantUrl;
+          currentUrl = selectedVariantUrl;
           response = await _dio.get(currentUrl, cancelToken: cancelToken);
           m3u8Content = response.data.toString();
         }

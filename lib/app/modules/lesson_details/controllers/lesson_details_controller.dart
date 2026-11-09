@@ -181,9 +181,18 @@ class LessonDetailsController extends GetxController {
         }
       }
 
-      videoSource ??= lesson.value!.directHlsUrl ?? lesson.value!.videoUrl;
+      // Phase 2: If streaming is locked and we don't have a local copy, 
+      // do NOT initialize player with online URLs.
+      if (lesson.value!.streamingLocked && !isLocal) {
+        videoSource = null;
+      } else {
+        videoSource ??= lesson.value!.directHlsUrl ?? lesson.value!.videoUrl;
+      }
 
-      if (videoSource == null) return;
+      if (videoSource == null) {
+        isVideoLoading.value = false;
+        return;
+      }
 
       BetterPlayerDataSource dataSource;
       if (isLocal) {
@@ -285,6 +294,8 @@ class LessonDetailsController extends GetxController {
           isCompleted: true,
           videoUrl: lesson.value!.videoUrl,
           directHlsUrl: lesson.value!.directHlsUrl,
+          downloadUrl: lesson.value!.downloadUrl,
+          streamingLocked: lesson.value!.streamingLocked,
           pdfUrl: lesson.value!.pdfUrl,
           externalExamUrl: lesson.value!.externalExamUrl,
         );

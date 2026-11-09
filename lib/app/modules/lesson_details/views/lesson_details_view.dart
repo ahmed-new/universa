@@ -155,6 +155,35 @@ class LessonDetailsView extends GetView<LessonDetailsController> {
                       );
                     }
 
+                    // Phase 2: Show message if streaming is locked and not downloaded
+                    if (lesson.streamingLocked && !controller.isDownloaded.value) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.lock_clock_outlined,
+                                color: Colors.orangeAccent,
+                                size: 50,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "تم إكمال هذه المحاضرة. يمكنك تحميلها ومشاهدتها من التطبيق.",
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.cairo(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

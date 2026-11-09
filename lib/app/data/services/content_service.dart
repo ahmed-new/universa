@@ -120,6 +120,7 @@ class ContentService extends GetxService {
   Future<Lesson?> getLessonDetails(int lessonId) async {
     final url = '$_baseUrl/api/mobile/lessons/$lessonId/';
     final headers = await _getHeaders();
+    headers['X-Video-Capabilities'] = 'separate-download-v1';
 
     try {
       final response = await http.get(Uri.parse(url), headers: headers);

@@ -68,6 +68,8 @@ class DownloadedVideosController extends GetxController {
       isCompleted: false,
       directHlsUrl: videoUrl,
       videoUrl: videoUrl,
+      downloadUrl: videoUrl,
+      streamingLocked: false,
     );
     
     await _downloadService.downloadLesson(lesson);
