@@ -8,10 +8,12 @@ import 'package:universa/app/data/services/download_service.dart';
 import 'package:universa/app/data/services/logger_service.dart';
 
 import 'package:universa/app/data/services/ad_service.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:async';
 import '../../subject_details/controllers/subject_details_controller.dart';
 import '../views/widgets/video_watermark_overlay.dart';
 
-class LessonDetailsController extends GetxController {
+class LessonDetailsController extends GetxController with WidgetsBindingObserver {
   final ContentService _contentService = Get.find<ContentService>();
   final DownloadService _downloadService = Get.find<DownloadService>();
   final AdService _adService = Get.find<AdService>();
@@ -21,8 +23,11 @@ class LessonDetailsController extends GetxController {
   final RxnInt nextLessonId = RxnInt();
   final RxnInt prevLessonId = RxnInt();
 
-  final isLocked = false.obs;
-  final RxnInt suggestedLessonId = RxnInt();
+  final viewingWindowStatus = 'not_started'.obs;
+  final remainingSeconds = 0.obs;
+  Timer? _timer;
+
+  String get viewingWindowRemainingSecondsStr => _formatDuration(remainingSeconds.value);
 
   final isLoading = true.obs;
   final lesson = Rxn<Lesson>();
@@ -39,6 +44,7 @@ class LessonDetailsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     final args = Get.arguments;
     if (args is int) {
       lessonId.value = args;
@@ -81,6 +87,16 @@ class LessonDetailsController extends GetxController {
     });
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Re-validate viewing window when app resumes
+      if (viewingWindowStatus.value == 'active' && !isDownloaded.value) {
+        fetchLessonDetails();
+      }
+    }
+  }
+
   void _updateNavigationIds() {
     try {
       if (Get.isRegistered<SubjectDetailsController>()) {
@@ -100,6 +116,8 @@ class LessonDetailsController extends GetxController {
     betterPlayerController = null;
     _localHlsServer?.close(force: true);
     _localHlsServer = null;
+    _timer?.cancel();
+    _timer = null;
 
     // Reset state
     lessonId.value = newId;
@@ -128,19 +146,330 @@ class LessonDetailsController extends GetxController {
 
   Future<void> fetchLessonDetails() async {
     isLoading.value = true;
-    isLocked.value = false;
     try {
       final result = await _contentService.getLessonDetails(lessonId.value);
       if (result != null) {
         lesson.value = result;
+        // Use status from model, which already distinguishes 'disabled' vs 'unknown'
+        viewingWindowStatus.value = result.viewingWindowStatus ?? 'unknown';
+        remainingSeconds.value = result.viewingWindowRemainingSeconds ?? 0;
+
         await _checkDownloadStatus();
-        await _initializePlayer();
+
+        // If local download exists, prioritize it and ignore window restrictions
+        if (isDownloaded.value) {
+          await _initializePlayer();
+          return;
+        }
+
+        // Handle viewing window logic for online playback
+        switch (viewingWindowStatus.value) {
+          case 'not_started':
+            isLoading.value = false;
+            await _showStartWindowDialog();
+            break;
+          case 'active':
+            _startCountdown();
+            isLoading.value = false;
+            await _showActiveWindowDialog();
+            break;
+          case 'expired':
+            // Expired windows don't initialize online player
+            await _initializePlayer();
+            break;
+          case 'disabled':
+            // Restriction is explicitly OFF
+            await _initializePlayer();
+            break;
+          default:
+            // Unknown or error state - safely block playback
+            debugPrint('Viewing window status: ${viewingWindowStatus.value} - blocking online playback');
+            await _initializePlayer(); // This will block because status is not 'active' or 'disabled'
+            break;
+        }
       }
-    } on LessonLockedException catch (e) {
-      isLocked.value = true;
-      suggestedLessonId.value = e.suggestedLessonId;
     } catch (e) {
       debugPrint('Error fetching lesson details: $e');
+      viewingWindowStatus.value = 'error';
+      await _initializePlayer();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void _startCountdown() {
+    _timer?.cancel();
+    if (remainingSeconds.value > 0) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (remainingSeconds.value > 0) {
+          remainingSeconds.value--;
+        } else {
+          timer.cancel();
+          viewingWindowStatus.value = 'expired';
+          betterPlayerController?.pause();
+          betterPlayerController?.dispose();
+          betterPlayerController = null;
+        }
+      });
+    }
+  }
+
+  Future<void> _showStartWindowDialog() async {
+    final result = await Get.dialog<bool>(
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: Dialog(
+          backgroundColor: const Color(0xFF1A1A2E),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.cyanAccent.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.timer_outlined,
+                    color: Colors.cyanAccent,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'بدء فترة مشاهدة المحاضرة',
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'بمجرد المتابعة، ستبدأ فترة مشاهدة هذه المحاضرة أونلاين لمدة 3 ساعات. بعد انتهاء المدة، يمكنك تحميل المحاضرة ومشاهدتها بدون إنترنت من خلال التطبيق.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cairo(
+                    color: Colors.white70,
+                    fontSize: 15,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(result: false),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white24),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'إلغاء',
+                          style: GoogleFonts.cairo(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Get.back(result: true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B5CF6),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'موافق، متابعة',
+                          style: GoogleFonts.cairo(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+
+    if (result == true) {
+      await _activateViewingWindow();
+    } else {
+      Get.back();
+    }
+  }
+
+  Future<void> _showActiveWindowDialog() async {
+    final result = await Get.dialog<bool>(
+      Directionality(
+        textDirection: TextDirection.rtl,
+        child: Dialog(
+          backgroundColor: const Color(0xFF1A1A2E),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.greenAccent.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.timer_play_outlined,
+                    color: Colors.greenAccent,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'الوقت المتبقي للمشاهدة',
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Obx(() => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'الوقت المتبقي: ${_formatDuration(remainingSeconds.value)}',
+                        style: GoogleFonts.cairo(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    )),
+                const SizedBox(height: 16),
+                Text(
+                  'يمكنك متابعة المشاهدة الآن. لا يتم إعادة تعيين الوقت عند إغلاق التطبيق.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cairo(
+                    color: Colors.white70,
+                    fontSize: 15,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(result: false),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white24),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'إلغاء',
+                          style: GoogleFonts.cairo(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Get.back(result: true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B5CF6),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'متابعة المشاهدة',
+                          style: GoogleFonts.cairo(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+
+    if (result == true) {
+      await _initializePlayer();
+    } else {
+      Get.back();
+    }
+  }
+
+  String _formatDuration(int totalSeconds) {
+    final hours = totalSeconds ~/ 3600;
+    final minutes = (totalSeconds % 3600) ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _activateViewingWindow() async {
+    isLoading.value = true;
+    try {
+      final result = await _contentService.startViewingWindow(lessonId.value);
+      if (result['status'] == 'active') {
+        viewingWindowStatus.value = 'active';
+        remainingSeconds.value = result['remaining_seconds'] ?? 0;
+        _startCountdown();
+        
+        // Refresh lesson details to get authorized URLs if needed
+        final updatedLesson = await _contentService.getLessonDetails(lessonId.value);
+        if (updatedLesson != null) {
+          lesson.value = updatedLesson;
+        }
+        
+        await _initializePlayer();
+      } else {
+        LoggerService().error(result['detail'] ?? 'فشل تفعيل فترة المشاهدة', title: 'خطأ');
+        Get.back();
+      }
+    } catch (e) {
+      LoggerService().error('حدث خطأ ما', title: 'خطأ');
+      Get.back();
     } finally {
       isLoading.value = false;
     }
@@ -183,7 +512,10 @@ class LessonDetailsController extends GetxController {
 
       // Phase 2: If streaming is locked and we don't have a local copy, 
       // do NOT initialize player with online URLs.
-      if (lesson.value!.streamingLocked && !isLocal) {
+      // Phase 3: Also block if viewing window is expired or in an unauthorized state.
+      // Unrestricted playback only if status is 'disabled' or 'active' (after confirmation).
+      final isWindowValid = viewingWindowStatus.value == 'active' || viewingWindowStatus.value == 'disabled';
+      if ((lesson.value!.streamingLocked || viewingWindowStatus.value == 'expired' || !isWindowValid) && !isLocal) {
         videoSource = null;
       } else {
         videoSource ??= lesson.value!.directHlsUrl ?? lesson.value!.videoUrl;
@@ -319,8 +651,10 @@ class LessonDetailsController extends GetxController {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     betterPlayerController?.dispose();
     _localHlsServer?.close(force: true);
+    _timer?.cancel();
     super.onClose();
   }
 

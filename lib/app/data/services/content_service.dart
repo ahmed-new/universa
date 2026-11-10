@@ -8,12 +8,6 @@ import '../models/category_model.dart';
 import '../models/instructor_model.dart';
 import '../models/enrollment_model.dart';
 
-class LessonLockedException implements Exception {
-  final String message;
-  final int? suggestedLessonId;
-  LessonLockedException(this.message, this.suggestedLessonId);
-}
-
 class ContentService extends GetxService {
   final String _baseUrl = 'https://universa-academy.site';
   final AuthService _authService = Get.find<AuthService>();
@@ -131,19 +125,45 @@ class ContentService extends GetxService {
         );
         return Lesson.fromJson(data);
       } else {
-        final body = jsonDecode(utf8.decode(response.bodyBytes));
-        if (body['detail'] == "Previous lessons must be completed first.") {
-          throw LessonLockedException(
-            body['detail'],
-            body['suggested_lesson_id'],
-          );
-        }
         throw Exception('Failed to load lesson details');
       }
     } catch (e) {
-      if (e is LessonLockedException) rethrow;
       debugPrint('Error fetching lesson details: $e');
       return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> getViewingWindowStatus(int lessonId) async {
+    final url = '$_baseUrl/api/mobile/lessons/$lessonId/viewing-window/';
+    final headers = await _getHeaders();
+
+    try {
+      final response = await http.get(Uri.parse(url), headers: headers);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return jsonDecode(utf8.decode(response.bodyBytes));
+      } else {
+        throw Exception('Failed to get viewing window status');
+      }
+    } catch (e) {
+      debugPrint('Error getting viewing window status: $e');
+      return {'status': 'error'};
+    }
+  }
+
+  Future<Map<String, dynamic>> startViewingWindow(int lessonId) async {
+    final url = '$_baseUrl/api/mobile/lessons/$lessonId/viewing-window/';
+    final headers = await _getHeaders();
+
+    try {
+      final response = await http.post(Uri.parse(url), headers: headers);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return jsonDecode(utf8.decode(response.bodyBytes));
+      } else {
+        throw Exception('Failed to start viewing window');
+      }
+    } catch (e) {
+      debugPrint('Error starting viewing window: $e');
+      return {'ok': false, 'detail': 'حدث خطأ غير متوقع'};
     }
   }
 

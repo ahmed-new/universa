@@ -32,83 +32,6 @@ class LessonDetailsView extends GetView<LessonDetailsController> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (controller.isLocked.value) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.lock_outline_rounded,
-                      size: 60,
-                      color: Colors.orangeAccent,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'عفواً، هذا الدرس مغلق',
-                    style: GoogleFonts.cairo(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'يجب عليك إكمال الدروس السابقة أولاً لتتمكن من مشاهدة هذا الدرس',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.cairo(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  if (controller.suggestedLessonId.value != null)
-                    ElevatedButton.icon(
-                      onPressed: () => controller.loadLesson(
-                        controller.suggestedLessonId.value!,
-                      ),
-                      icon: const Icon(Icons.play_circle_outline),
-                      label: Text(
-                        'الذهاب للدرس المتاح',
-                        style: GoogleFonts.cairo(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text(
-                      'العودة للخلف',
-                      style: GoogleFonts.cairo(color: Colors.white54),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
         final lesson = controller.lesson.value;
         if (lesson == null) {
           return Center(
@@ -152,6 +75,57 @@ class LessonDetailsView extends GetView<LessonDetailsController> {
                     if (controller.betterPlayerController != null) {
                       return BetterPlayer(
                         controller: controller.betterPlayerController!,
+                      );
+                    }
+
+                    // Phase 3: Show message if viewing window is expired or has an error/unknown state
+                    final windowStatus = controller.viewingWindowStatus.value;
+                    if ((windowStatus == 'expired' || windowStatus == 'error' || windowStatus == 'unknown') && !controller.isDownloaded.value) {
+                      IconData icon = Icons.timer_off_outlined;
+                      Color color = Colors.redAccent;
+                      String message = "انتهت فترة المشاهدة أونلاين لهذه المحاضرة. يمكنك تحميلها ومشاهدتها بدون إنترنت.";
+
+                      if (windowStatus == 'error' || windowStatus == 'unknown') {
+                        icon = Icons.error_outline;
+                        color = Colors.orangeAccent;
+                        message = "حدث خطأ في التحقق من فترة المشاهدة. يرجى إعادة المحاولة أو التواصل مع الدعم.";
+                      }
+
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                icon,
+                                color: color,
+                                size: 50,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                message,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.cairo(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (windowStatus == 'error' || windowStatus == 'unknown') ...[
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () => controller.fetchLessonDetails(),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white10,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  child: Text('إعادة المحاولة', style: GoogleFonts.cairo(color: Colors.white)),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       );
                     }
 
@@ -239,6 +213,55 @@ class LessonDetailsView extends GetView<LessonDetailsController> {
                       ],
                     ),
                     const SizedBox(height: 20),
+
+                    // Viewing Window Timer UI
+                    Obx(() {
+                      if (controller.viewingWindowStatus.value == 'active') {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 20),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.cyanAccent.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.cyanAccent.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                controller.viewingWindowRemainingSecondsStr,
+                                style: GoogleFonts.cairo(
+                                  color: Colors.cyanAccent,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'الوقت المتبقي للمشاهدة',
+                                    style: GoogleFonts.cairo(
+                                      color: Colors.white70,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.timer_outlined,
+                                    color: Colors.cyanAccent,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
 
                     // Actions Section (Complete & Navigation)
                     Column(

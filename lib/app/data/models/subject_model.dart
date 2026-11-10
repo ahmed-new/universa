@@ -95,6 +95,8 @@ class Lesson {
   final String? directHlsUrl;
   final String? downloadUrl;
   final bool streamingLocked;
+  final String? viewingWindowStatus;
+  final int? viewingWindowRemainingSeconds;
   final String? pdfUrl;
   final String? externalExamUrl;
 
@@ -109,6 +111,8 @@ class Lesson {
     this.directHlsUrl,
     this.downloadUrl,
     this.streamingLocked = false,
+    this.viewingWindowStatus,
+    this.viewingWindowRemainingSeconds,
     this.pdfUrl,
     this.externalExamUrl,
   });
@@ -125,6 +129,10 @@ class Lesson {
       directHlsUrl: json['direct_hls_url'],
       downloadUrl: json['download_url'],
       streamingLocked: json['streaming_locked'] ?? false,
+      viewingWindowStatus: json.containsKey('viewing_window_status')
+          ? json['viewing_window_status'] ?? 'disabled'
+          : 'unknown',
+      viewingWindowRemainingSeconds: json['viewing_window_remaining_seconds'],
       pdfUrl: json['pdf_url'],
       externalExamUrl: json['external_exam_url'],
     );
