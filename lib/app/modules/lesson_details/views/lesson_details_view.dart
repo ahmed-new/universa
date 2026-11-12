@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:better_player_plus/better_player_plus.dart';
+import '../../../data/models/subject_model.dart';
 import '../controllers/lesson_details_controller.dart';
 
 class LessonDetailsView extends GetView<LessonDetailsController> {
@@ -45,7 +46,9 @@ class LessonDetailsView extends GetView<LessonDetailsController> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'فشل في تحميل بيانات الدرس',
+                  controller.viewingWindowError.value ??
+                      'فشل في تحميل بيانات الدرس',
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.cairo(color: Colors.white),
                 ),
                 const SizedBox(height: 16),
@@ -79,16 +82,22 @@ class LessonDetailsView extends GetView<LessonDetailsController> {
                     }
 
                     // Phase 3: Show message if viewing window is expired or has an error/unknown state
-                    final windowStatus = controller.viewingWindowStatus.value;
-                    if ((windowStatus == 'expired' || windowStatus == 'error' || windowStatus == 'unknown') && !controller.isDownloaded.value) {
+                    final windowStatus = controller.viewingWindowState.value;
+                    final isWindowError = windowStatus == ViewingWindowStates.error ||
+                        windowStatus == ViewingWindowStates.unknown;
+                    if ((windowStatus == ViewingWindowStates.expired ||
+                            isWindowError) &&
+                        !controller.isDownloaded.value) {
                       IconData icon = Icons.timer_off_outlined;
                       Color color = Colors.redAccent;
                       String message = "انتهت فترة المشاهدة أونلاين لهذه المحاضرة. يمكنك تحميلها ومشاهدتها بدون إنترنت.";
 
-                      if (windowStatus == 'error' || windowStatus == 'unknown') {
+                      if (isWindowError) {
                         icon = Icons.error_outline;
                         color = Colors.orangeAccent;
-                        message = "حدث خطأ في التحقق من فترة المشاهدة. يرجى إعادة المحاولة أو التواصل مع الدعم.";
+                        // نعرض رسالة الخطأ الفعلية القادمة من طبقة الـ API إن وُجدت.
+                        message = controller.viewingWindowError.value ??
+                            "تعذر التحقق من فترة المشاهدة. يرجى إعادة المحاولة أو التواصل مع الدعم.";
                       }
 
                       return Center(
@@ -112,7 +121,7 @@ class LessonDetailsView extends GetView<LessonDetailsController> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              if (windowStatus == 'error' || windowStatus == 'unknown') ...[
+                              if (isWindowError) ...[
                                 const SizedBox(height: 16),
                                 ElevatedButton(
                                   onPressed: () => controller.fetchLessonDetails(),
@@ -216,7 +225,8 @@ class LessonDetailsView extends GetView<LessonDetailsController> {
 
                     // Viewing Window Timer UI
                     Obx(() {
-                      if (controller.viewingWindowStatus.value == 'active') {
+                      if (controller.viewingWindowState.value ==
+                          ViewingWindowStates.active) {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 20),
                           padding: const EdgeInsets.all(16),

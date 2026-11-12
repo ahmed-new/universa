@@ -8,6 +8,17 @@ import '../models/category_model.dart';
 import '../models/instructor_model.dart';
 import '../models/enrollment_model.dart';
 
+/// خطأ من طبقة الـ API يحمل رسالة قابلة للعرض للمستخدم.
+class ApiException implements Exception {
+  final String message;
+  final int? statusCode;
+
+  const ApiException(this.message, {this.statusCode});
+
+  @override
+  String toString() => message;
+}
+
 class ContentService extends GetxService {
   final String _baseUrl = 'https://universa-academy.site';
   final AuthService _authService = Get.find<AuthService>();
@@ -111,60 +122,111 @@ class ContentService extends GetxService {
     }
   }
 
-  Future<Lesson?> getLessonDetails(int lessonId) async {
+  /// تفاصيل الدرس. يحتوي الرد على `viewing_window_state`.
+  ///
+  /// يرمي [ApiException] عند فشل الطلب حتى يستطيع المستدعي عرض الخطأ
+  /// الفعلي بدلًا من افتراض حالة نافذة مشاهدة غير صحيحة.
+  Future<Lesson> getLessonDetails(int lessonId) async {
     final url = '$_baseUrl/api/mobile/lessons/$lessonId/';
     final headers = await _getHeaders();
     headers['X-Video-Capabilities'] = 'separate-download-v1';
 
-    try {
-      final response = await http.get(Uri.parse(url), headers: headers);
+    final response = await _send(
+      () => http.get(Uri.parse(url), headers: headers),
+      failureMessage: 'تعذر تحميل بيانات الدرس',
+    );
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final Map<String, dynamic> data = jsonDecode(
-          utf8.decode(response.bodyBytes),
-        );
-        return Lesson.fromJson(data);
-      } else {
-        throw Exception('Failed to load lesson details');
-      }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        _serverMessage(response, 'تعذر تحميل بيانات الدرس'),
+        statusCode: response.statusCode,
+      );
+    }
+
+    try {
+      final Map<String, dynamic> data = jsonDecode(
+        utf8.decode(response.bodyBytes),
+      );
+      return Lesson.fromJson(data);
     } catch (e) {
-      debugPrint('Error fetching lesson details: $e');
-      return null;
+      debugPrint('Error parsing lesson details: $e');
+      throw ApiException('تعذر قراءة بيانات الدرس من الخادم', statusCode: response.statusCode);
     }
   }
 
-  Future<Map<String, dynamic>> getViewingWindowStatus(int lessonId) async {
+  /// حالة نافذة المشاهدة. الرد يحتوي `state`.
+  ///
+  /// يرمي [ApiException] عند فشل الطلب بدلًا من إرجاع حالة مزيفة.
+  Future<ViewingWindowInfo> getViewingWindowStatus(int lessonId) async {
     final url = '$_baseUrl/api/mobile/lessons/$lessonId/viewing-window/';
     final headers = await _getHeaders();
 
+    final response = await _send(
+      () => http.get(Uri.parse(url), headers: headers),
+      failureMessage: 'تعذر التحقق من فترة المشاهدة',
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        _serverMessage(response, 'تعذر التحقق من فترة المشاهدة'),
+        statusCode: response.statusCode,
+      );
+    }
+
+    final Map<String, dynamic> data = jsonDecode(
+      utf8.decode(response.bodyBytes),
+    );
+    return ViewingWindowInfo.fromJson(data);
+  }
+
+  /// بدء نافذة المشاهدة. الرد يحتوي `state` و`remaining_seconds`.
+  ///
+  /// يرمي [ApiException] عند فشل الطلب مع رسالة الخادم إن وُجدت.
+  Future<ViewingWindowInfo> startViewingWindow(int lessonId) async {
+    final url = '$_baseUrl/api/mobile/lessons/$lessonId/viewing-window/';
+    final headers = await _getHeaders();
+
+    final response = await _send(
+      () => http.post(Uri.parse(url), headers: headers),
+      failureMessage: 'تعذر بدء فترة المشاهدة',
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        _serverMessage(response, 'تعذر بدء فترة المشاهدة'),
+        statusCode: response.statusCode,
+      );
+    }
+
+    final Map<String, dynamic> data = jsonDecode(
+      utf8.decode(response.bodyBytes),
+    );
+    return ViewingWindowInfo.fromJson(data);
+  }
+
+  Future<http.Response> _send(
+    Future<http.Response> Function() request, {
+    required String failureMessage,
+  }) async {
     try {
-      final response = await http.get(Uri.parse(url), headers: headers);
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return jsonDecode(utf8.decode(response.bodyBytes));
-      } else {
-        throw Exception('Failed to get viewing window status');
-      }
+      return await request();
     } catch (e) {
-      debugPrint('Error getting viewing window status: $e');
-      return {'status': 'error'};
+      debugPrint('$failureMessage: $e');
+      throw ApiException('$failureMessage: تحقق من اتصالك بالإنترنت');
     }
   }
 
-  Future<Map<String, dynamic>> startViewingWindow(int lessonId) async {
-    final url = '$_baseUrl/api/mobile/lessons/$lessonId/viewing-window/';
-    final headers = await _getHeaders();
-
+  /// يستخرج `detail` من رد الخادم إن وُجد، وإلا يستخدم [fallback].
+  String _serverMessage(http.Response response, String fallback) {
     try {
-      final response = await http.post(Uri.parse(url), headers: headers);
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return jsonDecode(utf8.decode(response.bodyBytes));
-      } else {
-        throw Exception('Failed to start viewing window');
+      final body = jsonDecode(utf8.decode(response.bodyBytes));
+      if (body is Map && body['detail'] is String) {
+        return body['detail'] as String;
       }
-    } catch (e) {
-      debugPrint('Error starting viewing window: $e');
-      return {'ok': false, 'detail': 'حدث خطأ غير متوقع'};
+    } catch (_) {
+      // رد غير JSON: نستخدم الرسالة الافتراضية.
     }
+    return '$fallback (كود ${response.statusCode})';
   }
 
   Future<Map<String, dynamic>> completeLesson(int lessonId) async {

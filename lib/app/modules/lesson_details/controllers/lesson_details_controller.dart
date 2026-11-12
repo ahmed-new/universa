@@ -23,7 +23,11 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
   final RxnInt nextLessonId = RxnInt();
   final RxnInt prevLessonId = RxnInt();
 
-  final viewingWindowStatus = 'not_started'.obs;
+  /// حالة نافذة المشاهدة المعيارية، انظر [ViewingWindowStates].
+  final viewingWindowState = ViewingWindowStates.unknown.obs;
+
+  /// رسالة الخطأ الفعلية عند تعذر التحقق من نافذة المشاهدة.
+  final viewingWindowError = RxnString();
   final remainingSeconds = 0.obs;
   Timer? _timer;
 
@@ -91,7 +95,8 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Re-validate viewing window when app resumes
-      if (viewingWindowStatus.value == 'active' && !isDownloaded.value) {
+      if (viewingWindowState.value == ViewingWindowStates.active &&
+          !isDownloaded.value) {
         fetchLessonDetails();
       }
     }
@@ -128,6 +133,9 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
     isPaused.value = false;
     isDownloaded.value = false;
     downloadProgress.value = 0;
+    viewingWindowState.value = ViewingWindowStates.unknown;
+    viewingWindowError.value = null;
+    remainingSeconds.value = 0;
 
     // Update navigation
     _updateNavigationIds();
@@ -146,51 +154,61 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
 
   Future<void> fetchLessonDetails() async {
     isLoading.value = true;
+    viewingWindowError.value = null;
     try {
       final result = await _contentService.getLessonDetails(lessonId.value);
-      if (result != null) {
-        lesson.value = result;
-        // Use status from model, which already distinguishes 'disabled' vs 'unknown'
-        viewingWindowStatus.value = result.viewingWindowStatus ?? 'unknown';
-        remainingSeconds.value = result.viewingWindowRemainingSeconds ?? 0;
+      lesson.value = result;
+      // الحالة قادمة من `viewing_window_state`، والحقل الغائب يصبح 'unknown'
+      // وليس 'disabled' حتى لا يُفتح التشغيل أونلاين بدون تحقق.
+      viewingWindowState.value = result.viewingWindowState;
+      remainingSeconds.value = result.viewingWindowRemainingSeconds ?? 0;
 
-        await _checkDownloadStatus();
+      await _checkDownloadStatus();
 
-        // If local download exists, prioritize it and ignore window restrictions
-        if (isDownloaded.value) {
-          await _initializePlayer();
-          return;
-        }
-
-        // Handle viewing window logic for online playback
-        switch (viewingWindowStatus.value) {
-          case 'not_started':
-            isLoading.value = false;
-            await _showStartWindowDialog();
-            break;
-          case 'active':
-            _startCountdown();
-            isLoading.value = false;
-            await _showActiveWindowDialog();
-            break;
-          case 'expired':
-            // Expired windows don't initialize online player
-            await _initializePlayer();
-            break;
-          case 'disabled':
-            // Restriction is explicitly OFF
-            await _initializePlayer();
-            break;
-          default:
-            // Unknown or error state - safely block playback
-            debugPrint('Viewing window status: ${viewingWindowStatus.value} - blocking online playback');
-            await _initializePlayer(); // This will block because status is not 'active' or 'disabled'
-            break;
-        }
+      // If local download exists, prioritize it and ignore window restrictions
+      if (isDownloaded.value) {
+        await _initializePlayer();
+        return;
       }
+
+      // Handle viewing window logic for online playback
+      switch (viewingWindowState.value) {
+        case ViewingWindowStates.notStarted:
+          isLoading.value = false;
+          await _showStartWindowDialog();
+          break;
+        case ViewingWindowStates.active:
+          _startCountdown();
+          isLoading.value = false;
+          await _showActiveWindowDialog();
+          break;
+        case ViewingWindowStates.expired:
+          // Expired windows don't initialize online player
+          await _initializePlayer();
+          break;
+        case ViewingWindowStates.disabled:
+          // Restriction is explicitly OFF
+          await _initializePlayer();
+          break;
+        default:
+          // حالة غير معروفة: نمنع التشغيل أونلاين ونعرض سببًا واضحًا.
+          debugPrint(
+            'Viewing window state: ${viewingWindowState.value} - blocking online playback',
+          );
+          viewingWindowError.value =
+              'تعذر التحقق من فترة المشاهدة: حالة غير معروفة من الخادم.';
+          await _initializePlayer();
+          break;
+      }
+    } on ApiException catch (e) {
+      debugPrint('Error fetching lesson details: $e');
+      viewingWindowState.value = ViewingWindowStates.error;
+      viewingWindowError.value = e.message;
+      await _initializePlayer();
     } catch (e) {
       debugPrint('Error fetching lesson details: $e');
-      viewingWindowStatus.value = 'error';
+      viewingWindowState.value = ViewingWindowStates.error;
+      viewingWindowError.value = 'تعذر التحقق من فترة المشاهدة: $e';
       await _initializePlayer();
     } finally {
       isLoading.value = false;
@@ -205,7 +223,7 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
           remainingSeconds.value--;
         } else {
           timer.cancel();
-          viewingWindowStatus.value = 'expired';
+          viewingWindowState.value = ViewingWindowStates.expired;
           betterPlayerController?.pause();
           betterPlayerController?.dispose();
           betterPlayerController = null;
@@ -336,7 +354,7 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.timer_play_outlined,
+                    Icons.timer_outlined,
                     color: Colors.greenAccent,
                     size: 48,
                   ),
@@ -449,30 +467,48 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
 
   Future<void> _activateViewingWindow() async {
     isLoading.value = true;
+    viewingWindowError.value = null;
     try {
+      // الاستجابة تحتوي `state` و`remaining_seconds`.
       final result = await _contentService.startViewingWindow(lessonId.value);
-      if (result['status'] == 'active') {
-        viewingWindowStatus.value = 'active';
-        remainingSeconds.value = result['remaining_seconds'] ?? 0;
+
+      if (result.state == ViewingWindowStates.active) {
+        viewingWindowState.value = ViewingWindowStates.active;
+        remainingSeconds.value = result.remainingSeconds ?? 0;
         _startCountdown();
-        
-        // Refresh lesson details to get authorized URLs if needed
-        final updatedLesson = await _contentService.getLessonDetails(lessonId.value);
-        if (updatedLesson != null) {
-          lesson.value = updatedLesson;
+
+        // تحديث الدرس للحصول على الروابط المصرح بها. فشل التحديث هنا
+        // لا يجب أن يلغي فترة المشاهدة التي تم تفعيلها للتو.
+        try {
+          lesson.value = await _contentService.getLessonDetails(lessonId.value);
+        } catch (e) {
+          debugPrint('Failed to refresh lesson after starting window: $e');
         }
-        
+
+        await _initializePlayer();
+      } else if (result.state == ViewingWindowStates.disabled) {
+        // القيد مغلق من الخادم: تشغيل عادي.
+        viewingWindowState.value = ViewingWindowStates.disabled;
         await _initializePlayer();
       } else {
-        LoggerService().error(result['detail'] ?? 'فشل تفعيل فترة المشاهدة', title: 'خطأ');
-        Get.back();
+        await _failActivation('تعذر بدء فترة المشاهدة: حالة غير متوقعة من الخادم.');
       }
+    } on ApiException catch (e) {
+      await _failActivation(e.message);
     } catch (e) {
-      LoggerService().error('حدث خطأ ما', title: 'خطأ');
-      Get.back();
+      await _failActivation('تعذر بدء فترة المشاهدة: $e');
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// عند فشل بدء النافذة نُبقي المستخدم في الصفحة ونعرض سبب الخطأ الفعلي
+  /// بدل إغلاق الصفحة، مع استمرار حظر التشغيل أونلاين.
+  Future<void> _failActivation(String message) async {
+    viewingWindowState.value = ViewingWindowStates.error;
+    viewingWindowError.value = message;
+    LoggerService().error(message, title: 'خطأ');
+    await _initializePlayer();
   }
 
   Future<void> _checkDownloadStatus() async {
@@ -513,9 +549,14 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
       // Phase 2: If streaming is locked and we don't have a local copy, 
       // do NOT initialize player with online URLs.
       // Phase 3: Also block if viewing window is expired or in an unauthorized state.
-      // Unrestricted playback only if status is 'disabled' or 'active' (after confirmation).
-      final isWindowValid = viewingWindowStatus.value == 'active' || viewingWindowStatus.value == 'disabled';
-      if ((lesson.value!.streamingLocked || viewingWindowStatus.value == 'expired' || !isWindowValid) && !isLocal) {
+      // Unrestricted playback only if state is 'disabled' or 'active' (after confirmation).
+      final isWindowValid =
+          viewingWindowState.value == ViewingWindowStates.active ||
+              viewingWindowState.value == ViewingWindowStates.disabled;
+      if ((lesson.value!.streamingLocked ||
+              viewingWindowState.value == ViewingWindowStates.expired ||
+              !isWindowValid) &&
+          !isLocal) {
         videoSource = null;
       } else {
         videoSource ??= lesson.value!.directHlsUrl ?? lesson.value!.videoUrl;
@@ -628,6 +669,10 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
           directHlsUrl: lesson.value!.directHlsUrl,
           downloadUrl: lesson.value!.downloadUrl,
           streamingLocked: lesson.value!.streamingLocked,
+          viewingWindowState: lesson.value!.viewingWindowState,
+          viewingWindowRemainingSeconds:
+              lesson.value!.viewingWindowRemainingSeconds,
+          viewingWindowExpiresAt: lesson.value!.viewingWindowExpiresAt,
           pdfUrl: lesson.value!.pdfUrl,
           externalExamUrl: lesson.value!.externalExamUrl,
         );

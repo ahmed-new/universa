@@ -1,6 +1,81 @@
 import 'category_model.dart';
 import 'instructor_model.dart';
 
+/// الحالات التي يعيدها الـ API لنافذة المشاهدة.
+///
+/// عقد الـ API:
+/// - `GET /api/mobile/lessons/<id>/` → `viewing_window_state`
+/// - `GET /api/mobile/lessons/<id>/viewing-window/` → `state`
+///
+/// الحقل الغائب أو القيمة غير المعروفة تُترجم إلى [unknown] وليست [disabled]،
+/// حتى لا يُفتح التشغيل أونلاين عند فشل التحقق.
+class ViewingWindowStates {
+  const ViewingWindowStates._();
+
+  static const notStarted = 'not_started';
+  static const active = 'active';
+  static const expired = 'expired';
+  static const disabled = 'disabled';
+  static const unknown = 'unknown';
+  static const error = 'error';
+
+  /// يحوّل قيمة الحالة الخام إلى إحدى الحالات المعروفة أو [unknown].
+  static String normalize(Object? raw) {
+    if (raw is! String) return unknown;
+    final value = raw.trim().toLowerCase();
+    switch (value) {
+      case notStarted:
+      case active:
+      case expired:
+      case disabled:
+        return value;
+      default:
+        return unknown;
+    }
+  }
+
+  /// يقرأ عدد الثواني المتبقية بأمان (int/num/String)، ويرجع `null` عند التلف.
+  static int? parseSeconds(Object? raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) return int.tryParse(raw.trim());
+    return null;
+  }
+
+  /// يقرأ تاريخ الانتهاء بصيغة ISO-8601، ويرجع `null` عند التلف.
+  static DateTime? parseDate(Object? raw) {
+    if (raw is! String || raw.trim().isEmpty) return null;
+    return DateTime.tryParse(raw.trim());
+  }
+}
+
+/// استجابة `GET /api/mobile/lessons/<id>/viewing-window/`.
+class ViewingWindowInfo {
+  final String state;
+  final bool? restrictionEnabled;
+  final int? remainingSeconds;
+  final DateTime? expiresAt;
+
+  const ViewingWindowInfo({
+    required this.state,
+    this.restrictionEnabled,
+    this.remainingSeconds,
+    this.expiresAt,
+  });
+
+  factory ViewingWindowInfo.fromJson(Map<String, dynamic> json) {
+    return ViewingWindowInfo(
+      state: ViewingWindowStates.normalize(json['state']),
+      restrictionEnabled: json['restriction_enabled'] is bool
+          ? json['restriction_enabled'] as bool
+          : null,
+      remainingSeconds:
+          ViewingWindowStates.parseSeconds(json['remaining_seconds']),
+      expiresAt: ViewingWindowStates.parseDate(json['expires_at']),
+    );
+  }
+}
+
 class Subject {
   final int id;
   final String name;
@@ -95,8 +170,11 @@ class Lesson {
   final String? directHlsUrl;
   final String? downloadUrl;
   final bool streamingLocked;
-  final String? viewingWindowStatus;
+
+  /// الحالة المعيارية لنافذة المشاهدة، انظر [ViewingWindowStates].
+  final String viewingWindowState;
   final int? viewingWindowRemainingSeconds;
+  final DateTime? viewingWindowExpiresAt;
   final String? pdfUrl;
   final String? externalExamUrl;
 
@@ -111,8 +189,9 @@ class Lesson {
     this.directHlsUrl,
     this.downloadUrl,
     this.streamingLocked = false,
-    this.viewingWindowStatus,
+    this.viewingWindowState = ViewingWindowStates.unknown,
     this.viewingWindowRemainingSeconds,
+    this.viewingWindowExpiresAt,
     this.pdfUrl,
     this.externalExamUrl,
   });
@@ -129,10 +208,15 @@ class Lesson {
       directHlsUrl: json['direct_hls_url'],
       downloadUrl: json['download_url'],
       streamingLocked: json['streaming_locked'] ?? false,
-      viewingWindowStatus: json.containsKey('viewing_window_status')
-          ? json['viewing_window_status'] ?? 'disabled'
-          : 'unknown',
-      viewingWindowRemainingSeconds: json['viewing_window_remaining_seconds'],
+      // العقد الفعلي: viewing_window_state. الحقل الغائب/غير المعروف => unknown
+      // وليس disabled حتى لا يُفتح التشغيل أونلاين بدون تحقق.
+      viewingWindowState:
+          ViewingWindowStates.normalize(json['viewing_window_state']),
+      viewingWindowRemainingSeconds: ViewingWindowStates.parseSeconds(
+        json['viewing_window_remaining_seconds'],
+      ),
+      viewingWindowExpiresAt:
+          ViewingWindowStates.parseDate(json['viewing_window_expires_at']),
       pdfUrl: json['pdf_url'],
       externalExamUrl: json['external_exam_url'],
     );
