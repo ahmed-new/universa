@@ -54,23 +54,31 @@ class ViewingWindowInfo {
   final String state;
   final bool? restrictionEnabled;
   final int? remainingSeconds;
+  final int? viewingWindowDurationSeconds;
   final DateTime? expiresAt;
 
   const ViewingWindowInfo({
     required this.state,
     this.restrictionEnabled,
     this.remainingSeconds,
+    this.viewingWindowDurationSeconds,
     this.expiresAt,
   });
 
   factory ViewingWindowInfo.fromJson(Map<String, dynamic> json) {
     return ViewingWindowInfo(
-      state: ViewingWindowStates.normalize(json['state']),
+      state: json.containsKey('state')
+          ? (json['state'] == null
+              ? ViewingWindowStates.unknown
+              : ViewingWindowStates.normalize(json['state']))
+          : ViewingWindowStates.unknown,
       restrictionEnabled: json['restriction_enabled'] is bool
           ? json['restriction_enabled'] as bool
           : null,
       remainingSeconds:
           ViewingWindowStates.parseSeconds(json['remaining_seconds']),
+      viewingWindowDurationSeconds:
+          ViewingWindowStates.parseSeconds(json['viewing_window_duration_seconds']),
       expiresAt: ViewingWindowStates.parseDate(json['expires_at']),
     );
   }
@@ -174,6 +182,7 @@ class Lesson {
   /// الحالة المعيارية لنافذة المشاهدة، انظر [ViewingWindowStates].
   final String viewingWindowState;
   final int? viewingWindowRemainingSeconds;
+  final int? viewingWindowDurationSeconds;
   final DateTime? viewingWindowExpiresAt;
   final String? pdfUrl;
   final String? externalExamUrl;
@@ -191,6 +200,7 @@ class Lesson {
     this.streamingLocked = false,
     this.viewingWindowState = ViewingWindowStates.unknown,
     this.viewingWindowRemainingSeconds,
+    this.viewingWindowDurationSeconds,
     this.viewingWindowExpiresAt,
     this.pdfUrl,
     this.externalExamUrl,
@@ -208,12 +218,18 @@ class Lesson {
       directHlsUrl: json['direct_hls_url'],
       downloadUrl: json['download_url'],
       streamingLocked: json['streaming_locked'] ?? false,
-      // العقد الفعلي: viewing_window_state. الحقل الغائب/غير المعروف => unknown
-      // وليس disabled حتى لا يُفتح التشغيل أونلاين بدون تحقق.
-      viewingWindowState:
-          ViewingWindowStates.normalize(json['viewing_window_state']),
+      // العقد الفعلي: viewing_window_state. الحقل الغائب => unknown
+      // الحقل الموجود بقيمة null => unknown (خطأ/غير محدد).
+      viewingWindowState: json.containsKey('viewing_window_state')
+          ? (json['viewing_window_state'] == null
+              ? ViewingWindowStates.unknown
+              : ViewingWindowStates.normalize(json['viewing_window_state']))
+          : ViewingWindowStates.unknown,
       viewingWindowRemainingSeconds: ViewingWindowStates.parseSeconds(
         json['viewing_window_remaining_seconds'],
+      ),
+      viewingWindowDurationSeconds: ViewingWindowStates.parseSeconds(
+        json['viewing_window_duration_seconds'],
       ),
       viewingWindowExpiresAt:
           ViewingWindowStates.parseDate(json['viewing_window_expires_at']),

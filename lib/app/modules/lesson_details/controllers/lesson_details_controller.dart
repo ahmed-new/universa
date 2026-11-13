@@ -233,6 +233,12 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
   }
 
   Future<void> _showStartWindowDialog() async {
+    // المدة المسموحة تأتي من الخادم عبر `viewingWindowDurationSeconds`.
+    // لا نستخدم `remainingSeconds` هنا لأنه يكون null في حالة `not_started`.
+    final durationText = _viewingWindowDurationText;
+    final windowMessage = durationText.isEmpty
+        ? 'بمجرد المتابعة، ستبدأ فترة مشاهدة هذه المحاضرة أونلاين. بعد انتهاء المدة، يمكنك تحميل المحاضرة ومشاهدتها بدون إنترنت من خلال التطبيق.'
+        : 'بمجرد المتابعة، ستبدأ فترة مشاهدة هذه المحاضرة أونلاين لمدة $durationText. بعد انتهاء المدة، يمكنك تحميل المحاضرة ومشاهدتها بدون إنترنت من خلال التطبيق.';
     final result = await Get.dialog<bool>(
       Directionality(
         textDirection: TextDirection.rtl,
@@ -267,7 +273,7 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'بمجرد المتابعة، ستبدأ فترة مشاهدة هذه المحاضرة أونلاين لمدة 3 ساعات. بعد انتهاء المدة، يمكنك تحميل المحاضرة ومشاهدتها بدون إنترنت من خلال التطبيق.',
+                  windowMessage,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.cairo(
                     color: Colors.white70,
@@ -463,6 +469,41 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
     final minutes = (totalSeconds % 3600) ~/ 60;
     final seconds = totalSeconds % 60;
     return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  /// المدة المسموحة لنافذة المشاهدة بصيغة عربية مقروءة (مثال: "3 ساعات").
+  ///
+  /// تعتمد على `viewingWindowDurationSeconds` القادم من الخادم، وترجع نصًا
+  /// فارغًا عند غيابه ليتجنّب المودال عرض مدة غير معروفة.
+  String get _viewingWindowDurationText {
+    final seconds = lesson.value?.viewingWindowDurationSeconds;
+    if (seconds == null || seconds <= 0) return '';
+    return _formatArabicDuration(seconds);
+  }
+
+  /// يحوّل الثواني إلى نص عربي (ساعات/دقائق) مع مراعاة صيغ الجمع.
+  String _formatArabicDuration(int totalSeconds) {
+    final hours = totalSeconds ~/ 3600;
+    final minutes = (totalSeconds % 3600) ~/ 60;
+
+    final parts = <String>[];
+    if (hours > 0) {
+      parts.add(_arabicCount(hours, 'ساعة', 'ساعتان', 'ساعات'));
+    }
+    if (minutes > 0) {
+      parts.add(_arabicCount(minutes, 'دقيقة', 'دقيقتان', 'دقائق'));
+    }
+    if (parts.isEmpty) {
+      return _arabicCount(totalSeconds % 60, 'ثانية', 'ثانيتان', 'ثوانٍ');
+    }
+    return parts.join(' و');
+  }
+
+  String _arabicCount(int value, String singular, String dual, String plural) {
+    if (value == 1) return singular;
+    if (value == 2) return dual;
+    if (value <= 10) return '$value $plural';
+    return '$value $singular';
   }
 
   Future<void> _activateViewingWindow() async {
@@ -672,6 +713,8 @@ class LessonDetailsController extends GetxController with WidgetsBindingObserver
           viewingWindowState: lesson.value!.viewingWindowState,
           viewingWindowRemainingSeconds:
               lesson.value!.viewingWindowRemainingSeconds,
+          viewingWindowDurationSeconds:
+              lesson.value!.viewingWindowDurationSeconds,
           viewingWindowExpiresAt: lesson.value!.viewingWindowExpiresAt,
           pdfUrl: lesson.value!.pdfUrl,
           externalExamUrl: lesson.value!.externalExamUrl,
